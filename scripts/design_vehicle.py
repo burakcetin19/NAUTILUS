@@ -259,7 +259,8 @@ def style(ax):
 def save(fig, name):
     os.makedirs(FIG, exist_ok=True)
     for ext in ('png', 'pdf'):
-        fig.savefig(os.path.join(FIG, f'{name}.{ext}'), dpi=200, bbox_inches='tight', facecolor=SURF)
+        meta = {'CreationDate': None} if ext == 'pdf' else {}       # deterministik cikti (git farki olmasin)
+        fig.savefig(os.path.join(FIG, f'{name}.{ext}'), dpi=200, bbox_inches='tight', facecolor=SURF, metadata=meta)
     plt.close(fig)
 
 
