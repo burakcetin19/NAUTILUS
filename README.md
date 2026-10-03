@@ -12,7 +12,7 @@ modelini kurmak ve simülasyonla kıyaslamak.
 |---|---|---|
 | 0 | Keşif, köprü doğrulama, Stonefish hidrodinamiği kaynak koddan | ✅ [`docs/00_kesif.md`](docs/00_kesif.md) |
 | 0.5 | Direnç üssü, birim analizi, C_d/C_f override, zaman tabanı, tek parça mesh | ✅ [`docs/00b_dogrulama.md`](docs/00b_dogrulama.md) |
-| 1 | Araç tasarım parametreleri (`config/vehicle.yaml`) | ⏳ |
+| 1 | Araç tasarım parametreleri, tek parça gövde mesh'i, stabilite, itki yerleşimi, direnç kalibrasyonu | 🟡 onay bekliyor: [`docs/01_tasarim.md`](docs/01_tasarim.md) |
 | 2 | YAML → senaryo üretimi, statik testler | ⏳ |
 | 3 | Açık çevrim itki testleri | ⏳ |
 | 4 | Analitik x ekseni modeli ve kıyas | ⏳ |
@@ -31,9 +31,19 @@ modelini kurmak ve simülasyonla kıyaslamak.
 ## Klasörler
 
 ```
-docs/          faz raporları (00_kesif.md, 00b_dogrulama.md, ...)
-docs/probe/    doğrulama senaryoları (.scn), torpido mesh üreticisi, koşu ve analiz betikleri
-figures/       rapor grafikleri (PNG + PDF)
+config/              vehicle.yaml (girdi), vehicle_derived.yaml (otomatik)
+hybrid_vehicle_sim/  model kütüphanesi: hull, hydrostatics, mass, drag, thrusters
+scripts/             design_vehicle.py (YAML -> mesh, tablolar, grafikler)
+meshes/              hull.obj (tek parça, watertight gövde)
+docs/                faz raporları (00_kesif.md, 00b_dogrulama.md, 01_tasarim.md, ...)
+docs/probe/          doğrulama senaryoları (.scn), test mesh'i, koşu ve analiz betikleri
+figures/             rapor grafikleri (PNG + PDF)
+```
+
+Araç modeli (Faz 1):
+
+```bash
+python3 scripts/design_vehicle.py   # config/vehicle.yaml -> meshes/hull.obj, config/vehicle_derived.yaml, docs/01_tasarim_tablolar.md, figures/faz1/
 ```
 
 ## Ortam

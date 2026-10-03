@@ -1,0 +1,47 @@
+# NAUTILUS arac tasarim girdileri (Faz 1).
+# Turetilmis degerler: python3 scripts/design_vehicle.py -> config/vehicle_derived.yaml
+# Eksenler: govde orijini toplam boyun ortasinda, x burun yonu, z asagi (NED govde ekseni).
+
+name: nautilus
+
+fluid:
+  rho: 1000.0          # [kg/m3] tatli su (havuz)
+  nu: 1.138e-6         # [m2/s] 15 C (Stonefish varsayilan su sicakligi)
+  g: 9.81              # [m/s2] Stonefish sabiti
+
+hull:                  # tek parca: kic yari-elipsoid + silindir + burun yari-elipsoid
+  diameter: 0.15       # [m]
+  nose_length: 0.15    # [m] burun yari-elipsoid uzunlugu (= yaricap ise yarim kure)
+  mid_length: 0.75     # [m] silindir
+  tail_length: 0.30    # [m] kic yari-elipsoid uzunlugu
+  mesh:
+    n_theta: 64        # cevresel dilim
+    n_cap: 24          # uc basina halka
+    mid_step: 0.05     # [m] silindir halka araligi
+
+mass:
+  reserve_buoyancy: 0.02   # (B - W) / W, yuzeyde hafif pozitif
+  bg: 0.015                # [m] CG, CB'nin bu kadar altinda (roll/pitch stabilitesi)
+  ballast_mass: 5.0        # [kg] ic balast (x = x_CB), BG'yi saglayacak z otomatik cozulur
+
+thrusters:               # simple_thruster: itki dogrudan [N], yon = aktuator +x ekseni
+  max_thrust: 10.0       # [N] her biri, simetrik limit
+  units:
+    - {name: ThrusterPort,       position: [-0.55, -0.10, 0.0], direction: [1, 0, 0]}
+    - {name: ThrusterStarboard,  position: [-0.55,  0.10, 0.0], direction: [1, 0, 0]}
+    - {name: ThrusterHeaveBow,   position: [ 0.28,  0.0,  0.0], direction: [0, 0, 1], x_relative_to_cb: true}
+    - {name: ThrusterHeaveStern, position: [-0.28,  0.0,  0.0], direction: [0, 0, 1], x_relative_to_cb: true}
+
+vbs:                     # degisken yuzdurme; Stonefish'te sadece agirlik ekliyor (atalet degismiyor)
+  enabled: false
+  max_volume: 6.0e-4     # [m3] 0.6 L
+  min_volume: 1.0e-6     # [m3] "bos" hacim; Stonefish V=Vmin'de de Vmin*rho*g ekliyor
+  x_relative_to_cb: 0.0  # [m]
+
+hydrodynamics:           # Stonefish C_d / C_f kalibrasyonu (Faz 0.5: F = a*u^3 + b*u)
+  calibration: total_band_fit
+  surge_band: [0.3, 1.5]     # [m/s] fiziksel toplam dirence minimax goreli hata ile fit
+  design_speed: 1.0          # [m/s] raporlama icin
+  form_factor: hoerner       # 1 + k = 1 + 1.5 (D/L)^1.5 + 7 (D/L)^3
+  cross_flow_cd: 0.8         # capraz akis C_D (literatur varsayimi, dogrulanmadi)
+  heave_band: [0.1, 0.4]      # [m/s]

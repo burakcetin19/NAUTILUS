@@ -1,0 +1,110 @@
+# OTOMATIK URETILDI - elle duzenlemeyin. Kaynak: config/vehicle.yaml
+generated_by: scripts/design_vehicle.py
+source: config/vehicle.yaml
+name: nautilus
+fluid:
+  rho: 1000.0
+  nu: 1.138e-06
+  g: 9.81
+mesh:
+  path: meshes/hull.obj
+  volume: 0.018519573242309743
+  surface: 0.5273964162485596
+  a_front: 0.017643085259320908
+  s_t: 0.5138337853996208
+  a_plan: 0.16547653467641588
+  s_t_z: 0.27047952354874916
+  cb:
+  - 0.023259633608023814
+  - -2.838060889383842e-18
+  - -4.185113814765591e-19
+mass:
+  mass: 18.15644435520563
+  cg:
+  - 0.023259633608023814
+  - -2.838060889383842e-18
+  - 0.015
+  inertia:
+  - 0.04557700781078451
+  - 1.2764643688405675
+  - 1.2657150275974232
+  ballast_mass: 5.0
+  ballast_pos:
+  - 0.023259633608023814
+  - -2.838060889383842e-18
+  - 0.05446933306561689
+hydrodynamics:
+  quadratic_drag:
+  - 0.07702703442915888
+  - 1.7777777777777763
+  - 1.7777777777777763
+  viscous_drag:
+  - 0.001035560201762279
+  - 0.021752515845317715
+  - 0.021752515845317715
+  surge_fit:
+    a: 0.6794972678531486
+    b: 0.5321058184807068
+    band:
+    - 0.3
+    - 1.5
+    max_rel_err: 0.1342863675235907
+  heave_fit:
+    a: 147.09025304570287
+    b: 5.883610121828152
+    band:
+    - 0.1
+    - 0.4
+    max_rel_err: 0.1111111111111156
+thrusters:
+- name: ThrusterPort
+  origin_xyz:
+  - -0.55
+  - -0.1
+  - 0.0
+  origin_rpy:
+  - 0.0
+  - 0.0
+  - 0.0
+  max_thrust: 10.0
+- name: ThrusterStarboard
+  origin_xyz:
+  - -0.55
+  - 0.1
+  - 0.0
+  origin_rpy:
+  - 0.0
+  - 0.0
+  - 0.0
+  max_thrust: 10.0
+- name: ThrusterHeaveBow
+  origin_xyz:
+  - 0.3032596336080238
+  - 0.0
+  - 0.0
+  origin_rpy:
+  - 0.0
+  - -1.5707963267948966
+  - 0.0
+  max_thrust: 10.0
+- name: ThrusterHeaveStern
+  origin_xyz:
+  - -0.2567403663919762
+  - 0.0
+  - 0.0
+  origin_rpy:
+  - 0.0
+  - -1.5707963267948966
+  - 0.0
+  max_thrust: 10.0
+vbs:
+  enabled: false
+  max_volume: 0.0006
+  min_volume: 1.0e-06
+  x_relative_to_cb: 0.0
+  x: 0.023259633608023814
+surface:
+  axis_depth: 0.06618649390474576
+  draft: 0.14118649390474575
+  freeboard: 0.008813506095254234
+  trim_deg: -0.13222223733670224
