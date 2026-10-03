@@ -1,0 +1,70 @@
+<?xml version="1.0"?>
+<!-- Faz 0 probe: etiket/topic dogrulamasi icin. Proje modeli DEGIL.
+     Silindir r=0.1 m, L=1.0 m, ekseni govde x; yogunluk 1000 -> notr yuzdurme.
+     simulation_data = ~/stonefish/Tests/Data (propeller.obj icin). -->
+<scenario>
+	<environment>
+		<ned latitude="41.0" longitude="29.0"/>
+		<ocean>
+			<water density="1000.0" jerlov="0.2"/>
+			<waves height="0.0"/>
+			<particles enabled="false"/>
+		</ocean>
+		<atmosphere>
+			<sun azimuth="20.0" elevation="50.0"/>
+		</atmosphere>
+	</environment>
+
+	<materials>
+		<material name="Neutral" density="1000.0" restitution="0.5"/>
+	</materials>
+
+	<looks>
+		<look name="yellow" rgb="1.0 0.9 0.0" roughness="0.3"/>
+		<look name="gray" rgb="0.3 0.3 0.3" roughness="0.4" metalness="0.5"/>
+	</looks>
+
+	<robot name="probe" fixed="false" self_collisions="false">
+		<base_link name="Hull" type="cylinder" physics="submerged" buoyant="true">
+			<dimensions radius="0.1" height="1.0"/>
+			<origin xyz="0.0 0.0 0.0" rpy="0.0 1.5708 0.0"/>
+			<material name="Neutral"/>
+			<look name="yellow"/>
+		</base_link>
+
+		<actuator name="ThrusterSurge" type="simple_thruster">
+			<link name="Hull"/>
+			<origin xyz="-0.55 0.0 0.0" rpy="0.0 0.0 0.0"/>
+			<specs lower_thrust_limit="-100.0" upper_thrust_limit="100.0"/>
+			<propeller right="true">
+				<mesh filename="propeller.obj" scale="1.0"/>
+				<material name="Neutral"/>
+				<look name="gray"/>
+			</propeller>
+		</actuator>
+
+		<sensor name="odom" type="odometry" rate="50.0">
+			<link name="Hull"/>
+			<origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+			<ros_publisher topic="/probe/odometry"/>
+		</sensor>
+
+		<sensor name="imu" type="imu" rate="20.0">
+			<link name="Hull"/>
+			<origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+			<ros_publisher topic="/probe/imu"/>
+		</sensor>
+
+		<sensor name="pressure" type="pressure" rate="10.0">
+			<link name="Hull"/>
+			<origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+			<ros_publisher topic="/probe/pressure"/>
+		</sensor>
+
+		<world_transform xyz="0.0 0.0 5.0" rpy="0.0 0.0 0.0"/>
+
+		<ros_subscriber thrusters="/probe/thrusters"/>
+		<ros_publisher thrusters="/probe/thruster_state"/>
+		<ros_debug physics="/probe/debug/physics"/>
+	</robot>
+</scenario>
