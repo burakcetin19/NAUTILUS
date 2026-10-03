@@ -1,0 +1,117 @@
+<?xml version="1.0"?>
+<!-- Faz 0.5 probe: 4 robot, birbirinden 3 m y araligiyla.
+     cyl_def  : Faz 0 silindiri (r=0.1, L=1.0), varsayilan Cd/Cf
+     cyl_ovr  : ayni silindir, <hydrodynamics> override
+     torp_sub : tek parca torpido mesh'i, rho=1000 (notr), 5 m derinlikte
+     torp_flt : ayni mesh, rho=600, yuzeyde serbest (thruster yok)
+     simulation_data = ~/stonefish/Tests/Data (propeller.obj icin). -->
+<scenario>
+	<environment>
+		<ned latitude="41.0" longitude="29.0"/>
+		<ocean>
+			<water density="1000.0" jerlov="0.2"/>
+			<waves height="0.0"/>
+			<particles enabled="false"/>
+		</ocean>
+		<atmosphere>
+			<sun azimuth="20.0" elevation="50.0"/>
+		</atmosphere>
+	</environment>
+
+	<materials>
+		<material name="Neutral" density="1000.0" restitution="0.5"/>
+		<material name="Light" density="600.0" restitution="0.5"/>
+	</materials>
+
+	<looks>
+		<look name="yellow" rgb="1.0 0.9 0.0" roughness="0.3"/>
+		<look name="orange" rgb="1.0 0.5 0.0" roughness="0.3"/>
+		<look name="gray" rgb="0.3 0.3 0.3" roughness="0.4" metalness="0.5"/>
+	</looks>
+
+	<robot name="cyl_def" fixed="false" self_collisions="false">
+		<base_link name="Hull" type="cylinder" physics="submerged" buoyant="true">
+			<dimensions radius="0.1" height="1.0"/>
+			<origin xyz="0.0 0.0 0.0" rpy="0.0 1.5708 0.0"/>
+			<material name="Neutral"/>
+			<look name="yellow"/>
+		</base_link>
+		<actuator name="Thr" type="simple_thruster">
+			<link name="Hull"/>
+			<origin xyz="-0.55 0.0 0.0" rpy="0.0 0.0 0.0"/>
+			<propeller right="true"><mesh filename="propeller.obj" scale="1.0"/><material name="Neutral"/><look name="gray"/></propeller>
+		</actuator>
+		<sensor name="odom" type="odometry" rate="50.0">
+			<link name="Hull"/><origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+			<ros_publisher topic="/p05/cyl_def/odometry"/>
+		</sensor>
+		<world_transform xyz="0.0 0.0 5.0" rpy="0.0 0.0 0.0"/>
+		<ros_subscriber thrusters="/p05/cyl_def/thrusters"/>
+		<ros_publisher thrusters="/p05/cyl_def/thruster_state"/>
+		<ros_debug physics="/p05/cyl_def/debug"/>
+	</robot>
+
+	<robot name="cyl_ovr" fixed="false" self_collisions="false">
+		<base_link name="Hull" type="cylinder" physics="submerged" buoyant="true">
+			<dimensions radius="0.1" height="1.0"/>
+			<origin xyz="0.0 0.0 0.0" rpy="0.0 1.5708 0.0"/>
+			<material name="Neutral"/>
+			<look name="orange"/>
+			<hydrodynamics viscous_drag="0.004 0.02 0.02" quadratic_drag="0.3 0.9 0.9"/>
+		</base_link>
+		<actuator name="Thr" type="simple_thruster">
+			<link name="Hull"/>
+			<origin xyz="-0.55 0.0 0.0" rpy="0.0 0.0 0.0"/>
+			<propeller right="true"><mesh filename="propeller.obj" scale="1.0"/><material name="Neutral"/><look name="gray"/></propeller>
+		</actuator>
+		<sensor name="odom" type="odometry" rate="50.0">
+			<link name="Hull"/><origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+			<ros_publisher topic="/p05/cyl_ovr/odometry"/>
+		</sensor>
+		<world_transform xyz="0.0 3.0 5.0" rpy="0.0 0.0 0.0"/>
+		<ros_subscriber thrusters="/p05/cyl_ovr/thrusters"/>
+		<ros_publisher thrusters="/p05/cyl_ovr/thruster_state"/>
+		<ros_debug physics="/p05/cyl_ovr/debug"/>
+	</robot>
+
+	<robot name="torp_sub" fixed="false" self_collisions="false">
+		<base_link name="Hull" type="model" physics="submerged" buoyant="true">
+			<physical>
+				<mesh filename="/home/burak/stonefish_ws/src/hybrid_vehicle_sim/docs/probe/meshes/torpedo_L1_D02.obj" scale="1.0"/>
+				<origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+			</physical>
+			<material name="Neutral"/>
+			<look name="yellow"/>
+		</base_link>
+		<actuator name="Thr" type="simple_thruster">
+			<link name="Hull"/>
+			<origin xyz="-0.55 0.0 0.0" rpy="0.0 0.0 0.0"/>
+			<propeller right="true"><mesh filename="propeller.obj" scale="1.0"/><material name="Neutral"/><look name="gray"/></propeller>
+		</actuator>
+		<sensor name="odom" type="odometry" rate="50.0">
+			<link name="Hull"/><origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+			<ros_publisher topic="/p05/torp_sub/odometry"/>
+		</sensor>
+		<world_transform xyz="0.0 6.0 5.0" rpy="0.0 0.0 0.0"/>
+		<ros_subscriber thrusters="/p05/torp_sub/thrusters"/>
+		<ros_publisher thrusters="/p05/torp_sub/thruster_state"/>
+		<ros_debug physics="/p05/torp_sub/debug"/>
+	</robot>
+
+	<robot name="torp_flt" fixed="false" self_collisions="false">
+		<base_link name="Hull" type="model" physics="submerged" buoyant="true">
+			<physical>
+				<mesh filename="/home/burak/stonefish_ws/src/hybrid_vehicle_sim/docs/probe/meshes/torpedo_L1_D02.obj" scale="1.0"/>
+				<origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+			</physical>
+			<material name="Light"/>
+			<look name="orange"/>
+		</base_link>
+		<sensor name="odom" type="odometry" rate="50.0">
+			<link name="Hull"/><origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+			<ros_publisher topic="/p05/torp_flt/odometry"/>
+		</sensor>
+		<world_transform xyz="0.0 9.0 0.0" rpy="0.0 0.0 0.0"/>
+		<ros_debug physics="/p05/torp_flt/debug"/>
+	</robot>
+</scenario>
