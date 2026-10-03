@@ -1,6 +1,6 @@
 # NAUTILUS: Hibrit (yüzey + su altı) araç modeli, Stonefish
 
-Bu üniversite projesinde, hem su yüzeyinde hem su altında hareket edebilen bir aracın [Stonefish](https://github.com/patrykcieslak/stonefish) simülatöründe modellenmesi amaçlanıyor. Hedef, x ekseninde sürtünme ve basınç (form) direncini ayırıp
+Bu projede, hem su yüzeyinde hem su altında hareket edebilen bir aracın [Stonefish](https://github.com/patrykcieslak/stonefish) simülatöründe modellenmesi amaçlanıyor. Hedef, x ekseninde sürtünme ve basınç (form) direncini ayırıp
 
     (m + m_a)·u̇ = T − F_sürtünme − F_basınç (− F_dalga, yüzeyde)
 
