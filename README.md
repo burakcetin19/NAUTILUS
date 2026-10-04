@@ -12,7 +12,7 @@ modelini kurmak ve simülasyonla kıyaslamak.
 |---|---|---|
 | 0 | Keşif, köprü doğrulama, Stonefish hidrodinamiği kaynak koddan | ✅ [`docs/00_kesif.md`](docs/00_kesif.md) |
 | 0.5 | Direnç üssü, birim analizi, C_d/C_f override, zaman tabanı, tek parça mesh | ✅ [`docs/00b_dogrulama.md`](docs/00b_dogrulama.md) |
-| 1 | Araç tasarım parametreleri, tek parça gövde mesh'i, stabilite, itki yerleşimi, direnç kalibrasyonu | 🟡 onay bekliyor: [`docs/01_tasarim.md`](docs/01_tasarim.md) |
+| 1 | Araç tasarım parametreleri, tek parça gövde mesh'i, stabilite, itki yerleşimi, direnç kalibrasyonu | 🟡 aşamada: [`docs/01_tasarim.md`](docs/01_tasarim.md) |
 | 2 | YAML → senaryo üretimi, statik testler | ⏳ |
 | 3 | Açık çevrim itki testleri | ⏳ |
 | 4 | Analitik x ekseni modeli ve kıyas | ⏳ |
