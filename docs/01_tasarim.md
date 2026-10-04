@@ -122,7 +122,7 @@ Stonefish'te surge yaklaşık 1.5 kat "ağır", heave yaklaşık 0.8 kat "hafif"
 | Stonefish'in mesh V/S/kaldırma/direncini birebir kullanması | ✅ Faz 0.5 (test mesh'iyle); bu mesh için Faz 2'de tekrar |
 | ITTC-57, Hoerner form faktörü, C_D,c = 0.8, Lamb ek kütle | 📚 literatür varsayımı |
 | Stonefish MVAE yarı-eksenleri, buna bağlı varsayılan C_d ve ek kütle, etkin atalet | ⏳ Faz 2'de ölçülecek |
-| Yüzeyde su çekimi (14.12 cm) ve trim (−0.13°) | ⏳ Faz 2 statik testi (hedef < %5) |
+| Yüzeyde su çekimi ve trim | ✅ Stonefish'te ölçüldü (nogpu, 90 s serbest yüzme, son 30 s): eksen derinliği 6.610 cm (tahmin 6.619, −%0.13), trim −0.132° (tahmin −0.132°), V_sub = m/ρ. Not: DebugPhysics `cob` alanı köprüde yanlış dönüşümle yayınlanıyor (`ROS2SimulationManager.cpp:768`); fizik etkilenmiyor |
 
 ## 7. Riskler
 

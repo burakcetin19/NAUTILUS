@@ -6,3 +6,4 @@ bags/
 build/
 install/
 log/
+scenarios/*.scn

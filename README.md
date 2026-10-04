@@ -46,6 +46,25 @@ Araç modeli (Faz 1):
 python3 scripts/design_vehicle.py   # config/vehicle.yaml -> meshes/hull.obj, config/vehicle_derived.yaml, docs/01_tasarim_tablolar.md, figures/faz1/
 ```
 
+## Simülasyonda görmek
+
+```bash
+scripts/run_sim.sh            # GUI (NVIDIA offload), 100 Hz, orta kalite; senaryoyu YAML'den yeniden üretir
+scripts/run_sim.sh nogpu      # pencere yok
+```
+
+İtki komutları. Sıra: Port, Starboard, HeaveBow, HeaveStern; birim N; dikey thrusterlarda + = aşağı. 1 s watchdog var: yayın durunca itki sıfırlanır.
+
+```bash
+ros2 topic pub -r 10 /nautilus/thrusters std_msgs/msg/Float64MultiArray "{data: [1.0, 1.0, 0.0, 0.0]}"   # ileri
+ros2 topic pub -r 10 /nautilus/thrusters std_msgs/msg/Float64MultiArray "{data: [1.0, -1.0, 0.0, 0.0]}"  # sağa dön
+ros2 topic pub -r 10 /nautilus/thrusters std_msgs/msg/Float64MultiArray "{data: [0.0, 0.0, 6.0, 6.0]}"   # dal
+```
+
+Kamera:
+- Sağ tuşla sürükle: döndür. Orta tuşla sürükle: kaydır. Tekerlek: yakınlaştır.
+- W/S/A/D/Q/Z: hareket (Shift ile hızlı). K: tuş haritası. ESC: çıkış.
+
 ## Ortam
 
 - Ubuntu 22.04, ROS2 Humble
