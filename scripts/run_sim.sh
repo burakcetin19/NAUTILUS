@@ -3,12 +3,18 @@
 # Kullanim: scripts/run_sim.sh [gui|nogpu] [rate_hz] [quality: low|medium|high]
 set -e
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
-MODE=${1:-gui}; RATE=${2:-100.0}; QUALITY=${3:-medium}
-SCN=$ROOT/scenarios/nautilus.scn
-python3 "$ROOT/scripts/gen_scenario.py" > /dev/null   # her seferinde guncel vehicle_derived.yaml'den
+MODE=${1:-gui}; RATE=${2:-100.0}; QUALITY=${3:-medium}; SCN_ARG=$4
+if [ -n "$SCN_ARG" ]; then
+  [[ "$SCN_ARG" = /* ]] && SCN="$SCN_ARG" || SCN="$ROOT/$SCN_ARG"
+else
+  SCN=$ROOT/scenarios/nautilus.scn
+  python3 "$ROOT/scripts/gen_scenario.py" > /dev/null   # her seferinde guncel vehicle_derived.yaml'den
+fi
 source /opt/ros/humble/setup.bash
 source ~/stonefish_ws/install/setup.bash
-# mesh yollari mutlak; data dizini sadece arguman olarak gerekli
+# SimpleThruster setpoint'i baslatilmamis (Faz 2): acilista 8 s sifir itki yayinla, sonra kullanici komutlarina birak
+timeout 8 python3 "$ROOT/scripts/thrust_cmd.py" > /dev/null 2>&1 &
+# mesh yollari data dizinine gore goreli: simulation_data = paket koku (kopru sona "/" ekliyor, stonefish_simulator*.cpp:67)
 if [ "$MODE" = gui ]; then
   exec env __NV_PRIME_RENDER_OFFLOAD=1 __GLX_VENDOR_LIBRARY_NAME=nvidia \
     ros2 launch stonefish_ros2 stonefish_simulator.launch.py simulation_data:=$ROOT scenario_desc:=$SCN \

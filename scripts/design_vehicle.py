@@ -2,8 +2,8 @@
 """Faz 1: config/vehicle.yaml -> mesh, turetilmis parametreler, tasarim tablolari, grafikler.
 
 Kullanim: python3 scripts/design_vehicle.py [config/vehicle.yaml]
-Ciktilar: meshes/hull.obj|json, config/vehicle_derived.yaml, docs/01_tasarim_tablolar.md,
-          figures/faz1/*.png|pdf
+Ciktilar: meshes/hull.obj|json, meshes/thruster.obj (gorsel), config/vehicle_derived.yaml,
+          docs/01_tasarim_tablolar.md, figures/faz1/*.png|pdf
 """
 import json
 import os
@@ -16,9 +16,13 @@ import matplotlib.pyplot as plt
 
 ROOT = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
 sys.path.insert(0, ROOT)
-from hybrid_vehicle_sim import hull, hydrostatics as hs, mass as ms, drag, thrusters as th  # noqa: E402
+from hybrid_vehicle_sim import hull, hydrostatics as hs, mass as ms, drag, thrusters as th, mvae  # noqa: E402
 
 FIG = os.path.join(ROOT, 'figures', 'faz1')
+HULL_OBJ = os.path.join(ROOT, 'meshes', 'hull.obj')
+# simple_thruster pervanesi yalnizca gorsel (SimpleThruster.cpp:46-157): kucuk kapali pod, L = 8 cm
+THRUSTER_POD = hull.HullParams(diameter=0.06, nose_length=0.02, mid_length=0.04, tail_length=0.02,
+                               n_theta=24, n_cap=6, mid_step=0.02)
 C1, C2, C3 = '#2a78d6', '#eb6834', '#1baf7a'          # dataviz referans paleti, ilk 3 slot
 INK, INK2, GRID, SURF, HULL = '#0b0b0b', '#52514e', '#e4e3df', '#ffffff', '#dcdad3'
 
@@ -37,6 +41,11 @@ def compute(cfg):
     if not (tight and euler == 2):
         raise RuntimeError('mesh kapali/tutarli yonlu degil')
     mp, ap = hull.mesh_props(V, F), hull.analytic_props(p)
+    # Stonefish MVAE portu dosyadan okur (float32 konumlar, kopya koseler): once mesh'i yaz
+    os.makedirs(os.path.dirname(HULL_OBJ), exist_ok=True)
+    hull.write_obj(HULL_OBJ, V, F, f"NAUTILUS govde L={p.length} D={p.diameter} a_n={p.nose_length} "
+                   f"L_mid={p.mid_length} a_t={p.tail_length}")
+    sfe = mvae.stonefish_ellipsoid(HULL_OBJ)
     rx, rr = hull.ring_profile(p)
     sl = hs.Slicer(rx, rr, p.n_theta)
     v_full, cb_full = sl.full()
@@ -72,13 +81,14 @@ def compute(cfg):
     cal_z = drag.calibrate(hc['heave_band'], heave_phys, mp['a_plan'], mp['s_t_z'], rho)
     cd = [cal_x['cd'], cal_z['cd'], cal_z['cd']]
     cf = [cal_x['cf'], cal_z['cf'], cal_z['cf']]
-    semi = np.array([p.length / 2, p.r, p.r])                 # MVAE tahmini (Faz 2'de olculecek)
-    cd_def = (1 / semi) / (1 / semi).max()
-    cf_def = 0.1 * cd_def
+    semi = np.array(sfe['semi_axes'])                         # Stonefish MVAE portu (Faz 2'de canli olculuyor)
+    cd_def = np.array(sfe['cd_default'])
+    cf_def = np.array(sfe['cf_default'])
 
     # ek kutle
     k1, k2 = drag.lamb_prolate(p.length, p.diameter)
     ma_sf = drag.stonefish_added_mass(*semi, rho)
+    ai_sf = drag.stonefish_added_inertia(*semi, rho)
 
     # thrusterlar
     units = th.resolve(cfg['thrusters']['units'], mm['cb'])
@@ -91,16 +101,15 @@ def compute(cfg):
     return dict(p=p, V=V, F=F, tight=tight, euler=euler, mp=mp, ap=ap, rx=rx, rr=rr, v_full=v_full,
                 cb_full=cb_full, rho=rho, nu=nu, g=g, m=m, mm=mm, cg=cg, surf=surf, wp=wp, kb=kb, kg=kg,
                 gm_formula=gm_formula, gm_num=gm_num, gm_sub=gm_sub, gz=gz, k=k, cal_x=cal_x, cal_z=cal_z,
-                cd=cd, cf=cf, cd_def=cd_def, cf_def=cf_def, k1=k1, k2=k2, ma_sf=ma_sf, semi=semi,
+                cd=cd, cf=cf, cd_def=cd_def, cf_def=cf_def, k1=k1, k2=k2, ma_sf=ma_sf, ai_sf=ai_sf, semi=semi, sfe=sfe,
                 units=units, B=B, t_max=t_max, cfg=cfg)
 
 
 # ------------------------------------------------------------------ ciktilar
 def write_outputs(r):
     p, mp, cfg = r['p'], r['mp'], r['cfg']
-    os.makedirs(os.path.join(ROOT, 'meshes'), exist_ok=True)
-    hull.write_obj(os.path.join(ROOT, 'meshes', 'hull.obj'), r['V'], r['F'],
-                   f"NAUTILUS govde L={p.length} D={p.diameter} a_n={p.nose_length} L_mid={p.mid_length} a_t={p.tail_length}")
+    Vt, Ft = hull.build_mesh(THRUSTER_POD)
+    hull.write_obj(os.path.join(ROOT, 'meshes', 'thruster.obj'), Vt, Ft, 'NAUTILUS thruster podu (yalnizca gorsel)')
     with open(os.path.join(ROOT, 'meshes', 'hull.json'), 'w') as fh:
         json.dump(dict(params=p.__dict__, n_vertices=len(r['V']), n_faces=len(r['F']), watertight=r['tight'],
                        euler=r['euler'], mesh=mp, analytic=r['ap'],
@@ -118,6 +127,11 @@ def write_outputs(r):
                            heave_fit={k: r['cal_z'][k] for k in ('a', 'b', 'band', 'max_rel_err')}),
         thrusters=[dict(name=u['name'], origin_xyz=u['position'].tolist(), origin_rpy=u['rpy'],
                         max_thrust=r['t_max']) for u in r['units']],
+        stonefish=dict(
+            mvae=dict(semi_axes=r['semi'], iterations=r['sfe']['iterations'], n_vertices=r['sfe']['n_vertices']),
+            cd_default=r['cd_def'], cf_default=r['cf_def'],
+            added_mass=r['ma_sf'], added_mass_mean=float(r['ma_sf'].mean()), m_eff=r['m'] + float(r['ma_sf'].mean()),
+            added_inertia=r['ai_sf'], inertia_eff=[I[i, i] + r['ai_sf'][i] for i in range(3)]),
         vbs=cfg['vbs'] | dict(x=r['mm']['cb'][0] + cfg['vbs']['x_relative_to_cb']),
         surface=dict(axis_depth=r['surf']['axis_depth'], draft=r['surf']['draft'],
                      freeboard=r['surf']['freeboard'], trim_deg=float(np.degrees(r['surf']['trim_rad']))))
@@ -172,7 +186,9 @@ def tables(r):
           f'| GM_L yüzey: formül / sayısal (±0.05°) | {100*r["gm_formula"]["L"]:.2f} / {100*r["gm_num"]["pitch"]:.2f} cm |',
           f'| GM su altı (roll = pitch), sayısal | {100*r["gm_sub"]:.3f} cm (BG×B/W = {100*mc_bg(r)*Bf/W:.3f}) |',
           f'| Roll periyodu (su altı, ek atalet yok) | {2*np.pi*np.sqrt(I[0,0]/(Bf*mc_bg(r))):.2f} s |',
-          f'| Pitch periyodu (su altı, ek atalet yok) | {2*np.pi*np.sqrt(I[1,1]/(Bf*mc_bg(r))):.2f} s |', '']
+          f'| Pitch periyodu (su altı, ek atalet yok) | {2*np.pi*np.sqrt(I[1,1]/(Bf*mc_bg(r))):.2f} s |',
+          f'| Roll / pitch periyodu (su altı, Stonefish I + aI) | {2*np.pi*np.sqrt((I[0,0]+r["ai_sf"][0])/(Bf*mc_bg(r))):.2f} / '
+          f'{2*np.pi*np.sqrt((I[1,1]+r["ai_sf"][1])/(Bf*mc_bg(r))):.2f} s |', '']
     L += ['## T4. Thruster yerleşimi', '',
           '| Ad | Konum xyz [m] | Yön | rpy [rad] | Yüzey dengesinde derinlik |', '|---|---|---|---|---|']
     for u in r['units']:
@@ -193,10 +209,10 @@ def tables(r):
     L += ['## T5. Surge direnci', '', f'Form faktörü (Hoerner): 1+k = {1+k:.4f}. '
           f'Stonefish kalibre: C_d,x = {r["cd"][0]:.5f}, C_f,x = {r["cf"][0]:.6f} m/s '
           f'(bant {r["cal_x"]["band"]} m/s, max göreli hata {100*r["cal_x"]["max_rel_err"]:.1f}%). '
-          f'Stonefish varsayılan (tahmini MVAE): C_d,x = {r["cd_def"][0]:.4f}, C_f,x = {r["cf_def"][0]:.5f}.', '',
+          f'Stonefish varsayılan (MVAE portu): C_d,x = {r["cd_def"][0]:.4f}, C_f,x = {r["cf_def"][0]:.5f}.', '',
           '| u [m/s] | Re | C_F | R_sürt. [N] | R_bas. [N] | R_top. [N] | SF kalibre F_f / F_p [N] | SF kalibre top. [N] | Hata | SF varsayılan top. [N] |',
           '|---|---|---|---|---|---|---|---|---|---|']
-    for u in (0.3, 0.5, 1.0, 1.5, 2.0):
+    for u in (0.3, 0.4, 0.5, 1.0, 1.5, 2.0):
         tot, fr, pr = drag.physical_surge(u, mp['surface'], r['p'].length, k, rho, nu)
         sp, sf = drag.stonefish_force(u, r['cd'][0], r['cf'][0], mp['a_front'], mp['s_t'], rho)
         dp, df = drag.stonefish_force(u, r['cd_def'][0], r['cf_def'][0], mp['a_front'], mp['s_t'], rho)
@@ -218,15 +234,22 @@ def tables(r):
     # ek kutle
     ma_sf = r['ma_sf']
     Vv = mp['volume']
+    sfe = r['sfe']
     L += ['## T6. Ek kütle', '', '| | Eksenel (x) | Yanal (y, z) | Surge yönünde etkin atalet |', '|---|---|---|---|',
           f'| Fiziksel (prolate, L/D={r["p"].length/r["p"].diameter:.0f}, Lamb) | k₁ = {r["k1"]:.4f} → {r["k1"]*rho*Vv:.3f} kg | '
           f'k₂ = {r["k2"]:.4f} → {r["k2"]*rho*Vv:.3f} kg | m + m_a,x = {m + r["k1"]*rho*Vv:.2f} kg |',
-          f'| Stonefish (tahmini MVAE yarı-eksenleri {r["semi"].round(4).tolist()}) | {ma_sf[0]:.3f} kg | '
-          f'{ma_sf[1]:.3f} kg | m + ort(m_a) = {m + ma_sf.mean():.2f} kg |', '']
+          f'| Stonefish (MVAE portu: yarı-eksenler {r["semi"].round(4).tolist()} m) | {ma_sf[0]:.3f} kg | '
+          f'{ma_sf[1]:.3f} kg | m + ort(m_a) = {m + ma_sf.mean():.2f} kg |', '',
+          f'MVAE portu (`hybrid_vehicle_sim/mvae.py`): Stonefish yükleyicisinin gördüğü {sfe["n_vertices"]} köşe (kopyalar dahil), '
+          f'{sfe["iterations"]} iterasyon (k = 0 → sınırlayıcı kutu yarı-boyutları). '
+          f'Ek atalet (Stonefish, I + aI): aI = ({r["ai_sf"][0]:.4f}, {r["ai_sf"][1]:.4f}, {r["ai_sf"][2]:.4f}) kg·m² '
+          f'(roll için kodda 0). Faz 2\'de canlı ölçülüyor.', '']
     vb = r['cfg']['vbs']
     L += ['## T7. VBS (opsiyonel, şu an kapalı)', '',
           f'Max {1e3*vb["max_volume"]:.2f} L → net yüzdürme {Bf-W:+.2f} N ile '
-          f'{Bf-W-rho*g*vb["max_volume"]:+.2f} N arası (Stonefish VBS sadece ağırlık ekler, ataleti değiştirmez).', '']
+          f'{Bf-W-rho*g*vb["max_volume"]:+.2f} N arası (Stonefish VBS sadece ağırlık ekler, ataleti değiştirmez). '
+          f'Nötr için gereken su hacmi {1e3*(Bf-W)/(rho*g):.2f} L; mevcut boyutla nötre ulaşılabilir mi: '
+          f'{bool(rho*g*vb["max_volume"] >= Bf-W)}.', '']
     # capraz kontroller
     L += ['## T8. Çapraz kontroller', '', '| Kontrol | Sonuç |', '|---|---|',
           f'| Mesh kapalı + tutarlı yönlü, Euler = 2 | {r["tight"]}, {r["euler"]} |',

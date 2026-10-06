@@ -20,7 +20,7 @@ hull:                  # tek parca: kic yari-elipsoid + silindir + burun yari-el
     mid_step: 0.05     # [m] silindir halka araligi
 
 mass:
-  reserve_buoyancy: 0.02   # (B - W) / W, yuzeyde hafif pozitif
+  reserve_buoyancy: 0.05   # (B - W) / W; Faz 1 karari: %2 -> %5 (fribord 8.8 -> 15.6 mm)
   bg: 0.015                # [m] CG, CB'nin bu kadar altinda (roll/pitch stabilitesi)
   ballast_mass: 5.0        # [kg] ic balast (x = x_CB), BG'yi saglayacak z otomatik cozulur
 
@@ -40,7 +40,7 @@ vbs:                     # degisken yuzdurme; Stonefish'te sadece agirlik ekliyo
 
 hydrodynamics:           # Stonefish C_d / C_f kalibrasyonu (Faz 0.5: F = a*u^3 + b*u)
   calibration: total_band_fit
-  surge_band: [0.3, 1.5]     # [m/s] fiziksel toplam dirence minimax goreli hata ile fit
+  surge_band: [0.5, 1.5]     # [m/s] minimax goreli hata fiti; Faz 1 karari: 0.3-1.5 (13.4%) -> 0.5-1.5 (6.65%)
   design_speed: 1.0          # [m/s] raporlama icin
   form_factor: hoerner       # 1 + k = 1 + 1.5 (D/L)^1.5 + 7 (D/L)^3
   cross_flow_cd: 0.8         # capraz akis C_D (literatur varsayimi, dogrulanmadi)

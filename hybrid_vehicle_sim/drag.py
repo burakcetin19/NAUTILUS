@@ -61,7 +61,7 @@ def lamb_prolate(l, d):
 
 def stonefish_added_mass(a, b, c, rho):
     """Stonefish SolidEntity::ComputeEllipsoidalApprox + LambKFactor (SolidEntity.cpp:1000-1039),
-    kodtaki haliyle (e = 1 - r2^2/r1). Yari-eksenler MVAE fitinden gelir; burada tahmin."""
+    kodtaki haliyle (e = 1 - r2^2/r1). Yari-eksenler: mvae.stonefish_ellipsoid."""
     r12 = (b + c) / 2
     e = 1 - r12 * r12 / a
     k = 1.0
@@ -70,3 +70,37 @@ def stonefish_added_mass(a, b, c, rho):
         k = a0 / (2 - a0)
     mx = k * 4 / 3 * np.pi * rho * a * r12 * r12
     return np.array([mx, 4 / 3 * np.pi * rho * c * c * a, 4 / 3 * np.pi * rho * b * b * a])
+
+
+def stonefish_added_inertia(a, b, c, rho):
+    """Stonefish ek ataleti (SolidEntity.cpp:1004-1006): roll icin 0 (kodda 'THIS SHOULD BE > 0'),
+    pitch pi rho b^2 a^3 / 12, yaw pi rho c^2 a^3 / 12. Robotta I_aug = I + aI (:665-669)."""
+    return np.array([0.0, np.pi * rho * b * b * a**3 / 12, np.pi * rho * c * c * a**3 / 12])
+
+
+def stonefish_face_forces(p1, p2, p3, cg, v, omega, cd, cf, rho):
+    """Tam dalmis govdede Stonefish yuz bazli direnc (SolidEntity.cpp:1723-1797) + katsayi duzeltmesi
+    (CorrectHydrodynamicForces, :1263-1287), govde (origin) ekseninde, durgun akiskan.
+    p1..p3: (n, 3) yuz koseleri [m] (origin ekseni), cg: CG [m], v/omega: CG hizi ve acisal hiz (govde ekseni).
+    Etkin katsayi C_eff = sum |d_i| C_i, d = ham kuvvet (ya da tork) yonu: egik akista L1 karisimi C_eff'i
+    eksen degerinin ustune cikarir; tork icin tork yonu kullanilir (roll torku -> C_x).
+    Donus: F_p (form, |v|^3), F_f (surtunme, v), T_p, T_f (CG etrafinda) [N, N m]."""
+    fn = np.cross(p2 - p1, p3 - p1)
+    ln = np.linalg.norm(fn, axis=1)
+    keep = ln > 1e-6
+    n1, area = fn[keep] / ln[keep, None], ln[keep] / 2
+    r = (p1[keep] + p2[keep] + p3[keep]) / 3 - np.asarray(cg)
+    vc = -(np.asarray(v) + np.cross(omega, r))
+    vcn = np.einsum('ij,ij->i', vc, n1)
+    vt = vc - vcn[:, None] * n1
+    front = vcn < -1e-12
+    q = vc[front] * np.linalg.norm(vc[front], axis=1)[:, None] * (-vcn[front] * area[front])[:, None]
+    tmag = np.einsum('ij,ij->i', vt, vt) > 1e-9
+    sk = vt[tmag] * area[tmag, None]
+    raw = dict(Fp=q.sum(0), Tp=np.cross(r[front], q).sum(0), Ff=sk.sum(0), Tf=np.cross(r[tmag], sk).sum(0))
+
+    def coeff(x, c):
+        nrm = np.linalg.norm(x)
+        return float(np.abs(x / nrm) @ np.asarray(c)) if nrm > 0 else 0.0
+    return (0.5 * rho * coeff(raw['Fp'], cd) * raw['Fp'], rho * coeff(raw['Ff'], cf) * raw['Ff'],
+            0.5 * rho * coeff(raw['Tp'], cd) * raw['Tp'], rho * coeff(raw['Tf'], cf) * raw['Tf'])
