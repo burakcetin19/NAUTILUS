@@ -1,10 +1,15 @@
-__pycache__/
-*.pyc
-bags/
-*.db3
-*.mcap
+# ROS 2 build artifacts
 build/
 install/
 log/
-scenarios/*.scn
-scenarios/tests/
+*.log
+
+# Python cache
+__pycache__/
+*.pyc
+
+# IDEs and tools
+.vscode/
+.idea/
+.codegraph/
+
